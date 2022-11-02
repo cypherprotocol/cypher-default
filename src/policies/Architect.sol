@@ -9,21 +9,12 @@
 
 pragma solidity ^0.8.15;
 
-import {
-    Kernel,
-    Policy,
-    Instruction,
-    Keycode,
-    Actions,
-    Permissions
-} from "../Kernel.sol";
+import { Kernel, Policy, Instruction, Keycode, Actions, Permissions } from "../Kernel.sol";
 import { toKeycode } from "../utils/KernelUtils.sol";
 import { DefaultInstructions } from "../modules/INSTR.sol";
 import { DefaultVotes } from "../modules/VOTES.sol";
 
-
 interface IGovernance {
-
     struct ProposalMetadata {
         bytes32 title;
         address submitter;
@@ -35,13 +26,13 @@ interface IGovernance {
         uint256 proposalId;
         uint256 activationTimestamp;
     }
-    
+
     event ProposalSubmitted(uint256 proposalId);
     event ProposalEndorsed(uint256 proposalId, address voter, uint256 amount);
     event ProposalActivated(uint256 proposalId, uint256 timestamp);
     event WalletVoted(uint256 proposalId, address voter, bool for_, uint256 userVotes);
     event ProposalExecuted(uint256 proposalId);
-    
+
     // proposing
     error NotEnoughVotesToPropose();
 
@@ -70,26 +61,27 @@ interface IGovernance {
     error CannotReclaimZeroVotes();
 }
 
-
 contract Governance is Policy, IGovernance {
-
-
     /////////////////////////////////////////////////////////////////////////////////
     //                         Kernel Policy Configuration                         //
     /////////////////////////////////////////////////////////////////////////////////
 
-
     DefaultInstructions public INSTR;
-    DefaultVotes public VOTES;
+    DefaultVotes public VOTE;
 
     constructor(Kernel kernel_) Policy(kernel_) {}
 
-    function configureDependencies() external override onlyKernel returns (Keycode[] memory dependencies) {
+    function configureDependencies()
+        external
+        override
+        onlyKernel
+        returns (Keycode[] memory dependencies)
+    {
         dependencies = new Keycode[](2);
-        
+
         dependencies[0] = toKeycode("INSTR");
         INSTR = DefaultInstructions(getModuleAddress(toKeycode("INSTR")));
-        
+
         dependencies[1] = toKeycode("VOTES");
         VOTES = DefaultVotes(getModuleAddress(toKeycode("VOTES")));
     }
@@ -108,11 +100,9 @@ contract Governance is Policy, IGovernance {
         requests[3] = Permissions(toKeycode("VOTES"), VOTES.transferFrom.selector);
     }
 
-
     /////////////////////////////////////////////////////////////////////////////////
     //                             Policy Variables                                //
     /////////////////////////////////////////////////////////////////////////////////
-
 
     // currently active proposal
     ActivatedProposal public activeProposal;
@@ -131,31 +121,30 @@ contract Governance is Policy, IGovernance {
     uint256 public constant ENDORSEMENT_THRESHOLD = 20; // required percentage of total supply to activate a proposal (in percentage)
     uint256 public constant EXECUTION_THRESHOLD = 33; // required net votes to execute a proposal (in percentage)
     uint256 public constant EXECUTION_TIMELOCK = 10 minutes; // required time for a proposal to be active before it can be executed
-    uint256 public constant GOVERNANCE_BOUNTY = 0;  // sucessful proposal reward rate (in basis points)
-    uint256 public constant VOTER_REWARD_RATE = 0;  // voter reward rate (in basis points)
-
+    uint256 public constant GOVERNANCE_BOUNTY = 0; // sucessful proposal reward rate (in basis points)
+    uint256 public constant VOTER_REWARD_RATE = 0; // voter reward rate (in basis points)
 
     /////////////////////////////////////////////////////////////////////////////////
     //                              View Functions                                 //
     /////////////////////////////////////////////////////////////////////////////////
 
-
     function getMetadata(uint256 proposalId_) public view returns (ProposalMetadata memory) {
         return getProposalMetadata[proposalId_];
     }
-
 
     function getActiveProposal() public view returns (ActivatedProposal memory) {
         return activeProposal;
     }
 
-
     /////////////////////////////////////////////////////////////////////////////////
     //                               User Actions                                  //
     /////////////////////////////////////////////////////////////////////////////////
 
-
-    function submitProposal(Instruction[] calldata instructions_, bytes32 title_, string memory proposalURI_) external {
+    function submitProposal(
+        Instruction[] calldata instructions_,
+        bytes32 title_,
+        string memory proposalURI_
+    ) external {
         // require the proposing wallet to own at least 1% of the outstanding governance power
         if (VOTES.balanceOf(msg.sender) * 100 < VOTES.totalSupply()) {
             revert NotEnoughVotesToPropose();
@@ -216,7 +205,10 @@ contract Governance is Policy, IGovernance {
         }
 
         // require endorsements from at least 20% of the total outstanding governance power
-        if ((totalEndorsementsForProposal[proposalId_] * 100) < VOTES.totalSupply() * ENDORSEMENT_THRESHOLD) {
+        if (
+            (totalEndorsementsForProposal[proposalId_] * 100) <
+            VOTES.totalSupply() * ENDORSEMENT_THRESHOLD
+        ) {
             revert NotEnoughEndorsementsToActivateProposal();
         }
 
@@ -273,7 +265,8 @@ contract Governance is Policy, IGovernance {
 
     function executeProposal() external {
         // require the net votes (yes - no) to be greater than 33% of the total voting supply
-        uint256 netVotes = yesVotesForProposal[activeProposal.proposalId] - noVotesForProposal[activeProposal.proposalId];
+        uint256 netVotes = yesVotesForProposal[activeProposal.proposalId] -
+            noVotesForProposal[activeProposal.proposalId];
         if (netVotes * 100 < VOTES.totalSupply() * EXECUTION_THRESHOLD) {
             revert NotEnoughVotesToExecute();
         }
@@ -288,12 +281,14 @@ contract Governance is Policy, IGovernance {
 
         for (uint256 step; step < instructions.length; ) {
             kernel.executeAction(instructions[step].action, instructions[step].target);
-            unchecked { ++step; }
+            unchecked {
+                ++step;
+            }
         }
 
         // reward the proposer with 2% of the token supply
         address proposer = getProposalMetadata[activeProposal.proposalId].submitter;
-        VOTES.mintTo(proposer, VOTES.totalSupply() * GOVERNANCE_BOUNTY / 10000);
+        VOTES.mintTo(proposer, (VOTES.totalSupply() * GOVERNANCE_BOUNTY) / 10000);
 
         // emit the corresponding event
         emit ProposalExecuted(activeProposal.proposalId);
@@ -328,6 +323,6 @@ contract Governance is Policy, IGovernance {
         VOTES.transferFrom(address(this), msg.sender, userVotes);
 
         // mint a bonus reward (+.4%) to the user for participation
-        VOTES.mintTo(msg.sender, userVotes * VOTER_REWARD_RATE / 10000);
+        VOTES.mintTo(msg.sender, (userVotes * VOTER_REWARD_RATE) / 10000);
     }
 }

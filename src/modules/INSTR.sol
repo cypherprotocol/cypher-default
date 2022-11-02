@@ -7,7 +7,6 @@ pragma solidity ^0.8.15;
 import { Kernel, Module, Keycode, Instruction, Actions } from "src/Kernel.sol";
 
 interface IDefaultInstructions {
-
     event InstructionsStored(uint256 instructionsId);
 
     error INSTR_InstructionsCannotBeEmpty();
@@ -16,9 +15,7 @@ interface IDefaultInstructions {
     error INSTR_InvalidModuleKeycode();
 }
 
-
 contract DefaultInstructions is Module, IDefaultInstructions {
-
     /////////////////////////////////////////////////////////////////////////////////
     //                         Kernel Module Configuration                         //
     /////////////////////////////////////////////////////////////////////////////////
