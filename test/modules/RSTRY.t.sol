@@ -10,16 +10,16 @@ import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 
 import { Kernel, Actions } from "src/Kernel.sol";
-import { DefaultEscrow } from "src/modules/ESCRW.sol";
+import { DefaultRegistry } from "src/modules/RSTRY.sol";
 
 import "../lib/ModuleTestFixtureGenerator.sol";
 
-contract DefaultEscrowTest is Test {
-    using ModuleTestFixtureGenerator for DefaultEscrow;
+contract DefaultRegistryTest is Test {
+    using ModuleTestFixtureGenerator for DefaultRegistry;
 
     Kernel internal kernel;
 
-    DefaultEscrow internal ESCRW;
+    DefaultRegistry internal RSTRY;
 
     UserFactory internal userFactory;
 
@@ -39,42 +39,30 @@ contract DefaultEscrowTest is Test {
 
         // deploy kernel and TRSRY module
         kernel = new Kernel();
-        ESCRW = new DefaultEscrow(kernel);
+        RSTRY = new DefaultRegistry(kernel);
 
         // generate godmode address
-        godmode = ESCRW.generateGodmodeFixture(type(DefaultEscrow).name);
+        godmode = RSTRY.generateGodmodeFixture(type(DefaultRegistry).name);
 
         // set up kernel
-        kernel.executeAction(Actions.InstallModule, address(ESCRW));
+        kernel.executeAction(Actions.InstallModule, address(RSTRY));
         kernel.executeAction(Actions.ActivatePolicy, godmode);
     }
 
     function testCorrect_IsRegistered() public {
         vm.startPrank(godmode);
-        ESCRW.registerUser(godmode, "cypher");
+        RSTRY.registerUser(godmode, "cypher");
         assertEq(
-            ESCRW.getUserIdForAddress(godmode),
+            RSTRY.getUserIdForAddress(godmode),
             keccak256(abi.encodePacked(godmode, "cypher"))
         );
     }
 
     function testCorrect_AssignVerifier() public {
         vm.startPrank(godmode);
-        ESCRW.registerUser(godmode, "cypher");
+        RSTRY.registerUser(godmode, "cypher");
 
-        ESCRW.assignVerifierToUser(ESCRW.getUserIdForAddress(godmode), user1);
-        assertEq(ESCRW.getVerifierForUserId(ESCRW.getUserIdForAddress(godmode)), user1);
-    }
-
-    function testCorrect_AddCallToStackTest() public {
-        vm.startPrank(godmode);
-        bytes32 id = ESCRW.registerUser(godmode, "cypher");
-        ESCRW.addCallToStack(user1, bytes4(keccak256(bytes("testFunction()"))), "", 0);
-        assertEq(
-            ESCRW.getFunctionFromStack(id, 0),
-            keccak256(
-                abi.encodePacked(user1, bytes4(keccak256(bytes("testFunction()"))), "", uint256(0))
-            )
-        );
+        RSTRY.assignVerifierToUser(RSTRY.getUserIdForAddress(godmode), user1);
+        assertEq(RSTRY.getVerifierForUserId(RSTRY.getUserIdForAddress(godmode)), user1);
     }
 }

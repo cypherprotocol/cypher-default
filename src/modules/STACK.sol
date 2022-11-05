@@ -4,14 +4,14 @@ pragma solidity ^0.8.15;
 
 import { Kernel, Module, Keycode, Instruction, Actions } from "src/Kernel.sol";
 
-interface IDefaultEscrow {}
+interface IDefaultStack {}
 
-contract DefaultEscrow is Module, IDefaultEscrow {
+contract DefaultHardwareStack is Module, IDefaultStack {
     /// CONSTRUCTOR
     constructor(Kernel kernel_) Module(kernel_) {}
 
     function KEYCODE() public pure override returns (Keycode) {
-        return Keycode.wrap("ESCRW");
+        return Keycode.wrap("STACK");
     }
 
     /// VARIABLES
@@ -21,8 +21,6 @@ contract DefaultEscrow is Module, IDefaultEscrow {
         uint256 numExecuted;
     }
 
-    mapping(address => bytes32) public getUserIdForAddress;
-    mapping(bytes32 => address) public getVerifierForUserId;
     mapping(bytes32 => Stack) public getStackForUserId;
 
     /// POLICY INTERFACE
@@ -40,20 +38,8 @@ contract DefaultEscrow is Module, IDefaultEscrow {
         Stack storage stack = getStackForUserId[userId];
     }
 
-    function registerUser(address user, string memory name)
-        public
-        permissioned
-        returns (bytes32 id)
-    {
-        id = _userHash(user, name);
-        getUserIdForAddress[user] = id;
-    }
-
-    function assignVerifierToUser(bytes32 userId, address verifier) public permissioned {
-        getVerifierForUserId[userId] = verifier;
-    }
-
     function addCallToStack(
+        bytes32 userId,
         address caller,
         bytes4 funcSelector,
         bytes calldata data,
@@ -61,19 +47,13 @@ contract DefaultEscrow is Module, IDefaultEscrow {
     ) external permissioned {
         bytes32 callHash = _callHash(caller, funcSelector, data, value);
 
-        // contract that the call is coming from (cypher client)
-        bytes32 userId = getUserIdForAddress[msg.sender];
         Stack storage stack = getStackForUserId[userId];
         stack.getFunctionForIndex[stack.numExecuted] = callHash;
+        stack.numExecuted++;
     }
 
     /// INTERNAL FUNCTIONS
 
-    /// @notice Returns the encoded data of the call
-    /// @param caller The user who made the call
-    /// @param funcSelector The 4 byte hash of the function called
-    /// @param data Hash of the parameters associated with the call
-    /// @param value Additional value used for monitoring
     function _callHash(
         address caller,
         bytes4 funcSelector,
@@ -81,9 +61,5 @@ contract DefaultEscrow is Module, IDefaultEscrow {
         uint256 value
     ) internal returns (bytes32 hash) {
         hash = keccak256(abi.encodePacked(caller, funcSelector, data, value));
-    }
-
-    function _userHash(address user, string memory name) internal returns (bytes32 hash) {
-        hash = keccak256(abi.encodePacked(user, name));
     }
 }
