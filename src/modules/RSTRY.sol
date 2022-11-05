@@ -4,7 +4,9 @@ pragma solidity ^0.8.15;
 
 import { Kernel, Module, Keycode, Instruction, Actions } from "src/Kernel.sol";
 
-interface IDefaultRegistry {}
+interface IDefaultRegistry {
+    error UserAlreadyRegistered();
+}
 
 contract DefaultRegistry is Module, IDefaultRegistry {
     /// CONSTRUCTOR
@@ -27,6 +29,7 @@ contract DefaultRegistry is Module, IDefaultRegistry {
         returns (bytes32 id)
     {
         id = _userHash(user, name);
+        if (getVerifierForUserId[id] != address(0)) revert UserAlreadyRegistered();
         getUserIdForAddress[user] = id;
     }
 

@@ -5,7 +5,7 @@ import { toKeycode } from "../utils/KernelUtils.sol";
 
 pragma solidity ^0.8.15;
 
-interface ICypher {
+interface IRouter {
     event CallAddedToStack(
         bytes32 indexed userId,
         address indexed caller,
@@ -17,13 +17,13 @@ interface ICypher {
     error UnregisteredUser();
 }
 
-contract Cypher is Policy, ICypher {
+contract Router is Policy, IRouter {
     /////////////////////////////////////////////////////////////////////////////////
     //                         Kernel Policy Configuration                         //
     /////////////////////////////////////////////////////////////////////////////////
 
-    DefaultHardwareStack public STACK;
     DefaultRegistry public RSTRY;
+    DefaultHardwareStack public STACK;
 
     constructor(Kernel kernel_) Policy(kernel_) {}
 
@@ -35,10 +35,10 @@ contract Cypher is Policy, ICypher {
     {
         dependencies = new Keycode[](2);
 
-        dependencies[0] = toKeycode("STACK");
-        dependencies[1] = toKeycode("RSTRY");
-        STACK = DefaultHardwareStack(getModuleAddress(toKeycode("STACK")));
+        dependencies[0] = toKeycode("RSTRY");
+        dependencies[1] = toKeycode("STACK");
         RSTRY = DefaultRegistry(getModuleAddress(toKeycode("RSTRY")));
+        STACK = DefaultHardwareStack(getModuleAddress(toKeycode("STACK")));
     }
 
     function requestPermissions()
