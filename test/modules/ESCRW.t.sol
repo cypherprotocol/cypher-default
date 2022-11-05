@@ -58,6 +58,14 @@ contract DefaultEscrowTest is Test {
         );
     }
 
+    function testCorrect_AssignVerifier() public {
+        vm.startPrank(godmode);
+        ESCRW.registerUser(godmode, "cypher");
+
+        ESCRW.assignVerifierToUser(ESCRW.getUserIdForAddress(godmode), user1);
+        assertEq(ESCRW.getVerifierForUserId(ESCRW.getUserIdForAddress(godmode)), user1);
+    }
+
     function testCorrect_AddCallToStackTest() public {
         vm.startPrank(godmode);
         bytes32 id = ESCRW.registerUser(godmode, "cypher");

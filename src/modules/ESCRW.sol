@@ -21,8 +21,9 @@ contract DefaultEscrow is Module, IDefaultEscrow {
         uint256 numExecuted;
     }
 
-    mapping(bytes32 => Stack) public getStackForUserId;
     mapping(address => bytes32) public getUserIdForAddress;
+    mapping(bytes32 => address) public getVerifierForUserId;
+    mapping(bytes32 => Stack) public getStackForUserId;
 
     /// POLICY INTERFACE
 
@@ -46,6 +47,10 @@ contract DefaultEscrow is Module, IDefaultEscrow {
     {
         id = _userHash(user, name);
         getUserIdForAddress[user] = id;
+    }
+
+    function assignVerifierToUser(bytes32 userId, address verifier) public permissioned {
+        getVerifierForUserId[userId] = verifier;
     }
 
     function addCallToStack(
