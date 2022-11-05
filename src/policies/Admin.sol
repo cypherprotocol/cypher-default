@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+
+// The Administration Policy manages clients and their respective permissions.
+
 import { DefaultRegistry } from "../modules/RSTRY.sol";
 import { DefaultHardwareStack } from "../modules/STACK.sol";
 import { Kernel, Policy, Permissions, Keycode } from "../Kernel.sol";

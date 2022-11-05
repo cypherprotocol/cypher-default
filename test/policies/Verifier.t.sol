@@ -12,11 +12,11 @@ import { ERC20 } from "solmate/tokens/ERC20.sol";
 
 import { DefaultRegistry } from "src/modules/RSTRY.sol";
 import { DefaultHardwareStack } from "src/modules/STACK.sol";
-import { IRouter, Router } from "src/policies/Router.sol";
+import { IVerifier, Verifier } from "src/policies/Verifier.sol";
 
 import "../lib/ModuleTestFixtureGenerator.sol";
 
-contract RouterTest is Test {
+contract VerifierTest is Test {
     using ModuleTestFixtureGenerator for DefaultRegistry;
     using ModuleTestFixtureGenerator for DefaultHardwareStack;
 
@@ -28,7 +28,7 @@ contract RouterTest is Test {
     DefaultHardwareStack internal STACK;
 
     // policies
-    Router internal router;
+    Verifier internal verifier;
 
     MockERC20 internal DAI;
 
@@ -61,7 +61,7 @@ contract RouterTest is Test {
         STACK = new DefaultHardwareStack(kernel);
 
         // deploy redemption
-        router = new Router(kernel);
+        verifier = new Verifier(kernel);
         // pod = new Pod(kernel);
 
         // generate fixtures
@@ -71,7 +71,7 @@ contract RouterTest is Test {
         // set up kernel
         kernel.executeAction(Actions.InstallModule, address(RSTRY));
         kernel.executeAction(Actions.InstallModule, address(STACK));
-        kernel.executeAction(Actions.ActivatePolicy, address(router));
+        kernel.executeAction(Actions.ActivatePolicy, address(verifier));
         kernel.executeAction(Actions.ActivatePolicy, address(registryGod));
         kernel.executeAction(Actions.ActivatePolicy, address(stackGod));
 
@@ -87,10 +87,18 @@ contract RouterTest is Test {
         // vm.stopPrank();
     }
 
-    function testCorrectness_Route() public {
-        // redeem user1
-        vm.startPrank(user1);
-        // pod.mintOne();
+    function testCorrectness_ExecuteCallAsVerifier() public {
+        vm.startPrank(registryGod);
+        bytes32 userId = RSTRY.registerUser(user1, "user1");
+        RSTRY.assignApproverToUser(RSTRY.getUserIdForAddress(user1), user2));
+        vm.stopPrank();
+
+        vm.startPrank(stackGod);
+        vm.stopPrank();
+
+        // execute the call
+        vm.startPrank(user2);
+
         vm.stopPrank();
     }
 

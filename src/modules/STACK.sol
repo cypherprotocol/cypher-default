@@ -19,6 +19,7 @@ contract DefaultHardwareStack is Module, IDefaultStack {
     struct Stack {
         mapping(uint256 => bytes32) getFunctionForIndex;
         uint256 numExecuted;
+        uint256 currentIndex;
     }
 
     mapping(bytes32 => Stack) public getStackForUserId;
@@ -55,7 +56,8 @@ contract DefaultHardwareStack is Module, IDefaultStack {
         bytes32 callHash = _callHash(caller, funcSelector, data, value);
 
         Stack storage stack = getStackForUserId[userId];
-        stack.getFunctionForIndex[stack.numExecuted] = callHash;
+        stack.getFunctionForIndex[stack.currentIndex] = callHash;
+        stack.currentIndex++;
     }
 
     /// INTERNAL FUNCTIONS

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+
+// The Monitor Policy checks transactions for approval and executes them if approved.
+
 import { DefaultRegistry } from "../modules/RSTRY.sol";
 import { DefaultHardwareStack } from "../modules/STACK.sol";
 import { Kernel, Policy, Permissions, Keycode } from "../Kernel.sol";
@@ -5,11 +9,19 @@ import { toKeycode } from "../utils/KernelUtils.sol";
 
 pragma solidity ^0.8.15;
 
-interface IVerifier {
-    error NotAssignedVerifier();
+interface IMonitor {
+    event CallAddedToStack(
+        bytes32 indexed userId,
+        address indexed caller,
+        bytes4 funcSelector,
+        bytes data,
+        uint256 value
+    );
+
+    error UnregisteredUser();
 }
 
-contract Verifier is Policy, IVerifier {
+contract Monitor is Policy, IMonitor {
     /////////////////////////////////////////////////////////////////////////////////
     //                         Kernel Policy Configuration                         //
     /////////////////////////////////////////////////////////////////////////////////
@@ -41,15 +53,12 @@ contract Verifier is Policy, IVerifier {
         returns (Permissions[] memory requests)
     {
         requests = new Permissions[](1);
-        requests[0] = Permissions(toKeycode("STACK"), STACK.executeCallFromStack.selector);
+        requests[0] = Permissions(toKeycode("STACK"), STACK.addCallToStack.selector);
     }
 
-    modifier onlyVerifier(bytes32 userId) {
-        if (msg.sender == RSTRY.getVerifierForUserId(userId)) revert NotAssignedVerifier();
-        _;
-    }
+    /////////////////////////////////////////////////////////////////////////////////
+    //                               User Actions                                  //
+    /////////////////////////////////////////////////////////////////////////////////
 
-    function executeCallFromStack(bytes32 userId) external onlyVerifier(userId) {
-        STACK.executeCallFromStack(userId);
-    }
+    function checkEnter() {}
 }

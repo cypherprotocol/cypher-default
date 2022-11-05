@@ -19,7 +19,7 @@ contract DefaultRegistry is Module, IDefaultRegistry {
     /// VARIABLES
 
     mapping(address => bytes32) public getUserIdForAddress;
-    mapping(bytes32 => address) public getVerifierForUserId;
+    mapping(bytes32 => address) public getApproverForUser;
 
     /// POLICY INTERFACE
 
@@ -29,12 +29,12 @@ contract DefaultRegistry is Module, IDefaultRegistry {
         returns (bytes32 id)
     {
         id = _userHash(user, name);
-        if (getVerifierForUserId[id] != address(0)) revert UserAlreadyRegistered();
+        if (getUserIdForAddress[id] != address(0)) revert UserAlreadyRegistered();
         getUserIdForAddress[user] = id;
     }
 
-    function assignVerifierToUser(bytes32 userId, address verifier) public permissioned {
-        getVerifierForUserId[userId] = verifier;
+    function assignApproverForUser(bytes32 userId, address approver) public permissioned {
+        getApproverForUser[userId] = approver;
     }
 
     /// INTERNAL FUNCTIONS

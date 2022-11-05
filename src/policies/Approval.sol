@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+
+// The Approval Policy allows specific roles to approve or reject a transaction.
+
 import { DefaultRegistry } from "../modules/RSTRY.sol";
 import { DefaultHardwareStack } from "../modules/STACK.sol";
 import { Kernel, Policy, Permissions, Keycode } from "../Kernel.sol";
@@ -5,19 +9,11 @@ import { toKeycode } from "../utils/KernelUtils.sol";
 
 pragma solidity ^0.8.15;
 
-interface IRouter {
-    event CallAddedToStack(
-        bytes32 indexed userId,
-        address indexed caller,
-        bytes4 funcSelector,
-        bytes data,
-        uint256 value
-    );
-
-    error UnregisteredUser();
+interface IApproval {
+    error NotApprover();
 }
 
-contract Router is Policy, IRouter {
+contract Approval is Policy, IApproval {
     /////////////////////////////////////////////////////////////////////////////////
     //                         Kernel Policy Configuration                         //
     /////////////////////////////////////////////////////////////////////////////////
@@ -49,18 +45,10 @@ contract Router is Policy, IRouter {
         returns (Permissions[] memory requests)
     {
         requests = new Permissions[](1);
-        requests[0] = Permissions(toKeycode("STACK"), STACK.addCallToStack.selector);
+        requests[0] = Permissions(toKeycode("STACK"), STACK.executeCallFromStack.selector);
     }
 
-    function stashCall(
-        address caller,
-        bytes4 funcSelector,
-        bytes calldata data,
-        uint256 value
-    ) external {
-        bytes32 userId = RSTRY.getUserIdForAddress(address(msg.sender));
-        if (userId == "") revert UnregisteredUser();
-        STACK.addCallToStack(userId, caller, funcSelector, data, value);
-        emit CallAddedToStack(userId, caller, funcSelector, data, value);
-    }
+    /////////////////////////////////////////////////////////////////////////////////
+    //                               User Actions                                  //
+    /////////////////////////////////////////////////////////////////////////////////
 }

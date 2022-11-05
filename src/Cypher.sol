@@ -3,10 +3,10 @@
 
 pragma solidity ^0.8.15;
 
-import { Router } from "src/policies/Router.sol";
+import { Monitor } from "src/policies/Monitor.sol";
 
 contract Cypher {
-    Router public router;
+    Monitor public monitor;
 
     constructor(address _router) {
         router = Router(_router);
