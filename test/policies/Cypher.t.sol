@@ -13,6 +13,7 @@ import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { DefaultRegistry } from "src/modules/RSTRY.sol";
 import { DefaultHardwareStack } from "src/modules/STACK.sol";
 import { ICypher, Cypher } from "src/policies/Cypher.sol";
+import { Pod } from "src/Pod.sol";
 
 import "../lib/ModuleTestFixtureGenerator.sol";
 
@@ -29,6 +30,7 @@ contract CypherTest is Test {
 
     // policies
     Cypher internal cypher;
+    Pod internal pod;
 
     MockERC20 internal DAI;
 
@@ -61,7 +63,8 @@ contract CypherTest is Test {
         STACK = new DefaultHardwareStack(kernel);
 
         // deploy redemption
-        cypher = new Cypher(kernel);
+        // cypher = new Cypher(kernel);
+        pod = new Pod(kernel);
 
         // generate fixtures
         registryGod = RSTRY.generateGodmodeFixture(type(DefaultRegistry).name);
@@ -70,7 +73,7 @@ contract CypherTest is Test {
         // set up kernel
         kernel.executeAction(Actions.InstallModule, address(RSTRY));
         kernel.executeAction(Actions.InstallModule, address(STACK));
-        kernel.executeAction(Actions.ActivatePolicy, address(cypher));
+        kernel.executeAction(Actions.ActivatePolicy, address(pod));
         kernel.executeAction(Actions.ActivatePolicy, address(registryGod));
         kernel.executeAction(Actions.ActivatePolicy, address(stackGod));
 
@@ -86,46 +89,18 @@ contract CypherTest is Test {
         // vm.stopPrank();
     }
 
-    // function testCorrectness_Redeem() public {
-    //     // redeem user1
-    //     vm.startPrank(user1);
-    //     VOTES.approve(address(TRSRY), VOTES.balanceOf(user1));
-    //     redemption.redeem(VOTES.balanceOf(user1));
-    //
-    //     // current TRSRY total = 1M DAI
-    //     // user1 holds 200k/1M tokens = 20% of TRSRY = 200K
-    //     // redeeming 20% * 95% * 200k = 190k redeemed
-    //     assertEq(DAI.balanceOf(user1), 190_000 * 1e18);
-    //     assertEq(DAI.balanceOf(address(TRSRY)), 810_000 * 1e18);
-    //
-    //     vm.stopPrank();
-    //
-    //     // redeem user2
-    //     vm.startPrank(user2);
-    //     VOTES.approve(address(TRSRY), VOTES.balanceOf(user2)); // only redeem half
-    //     redemption.redeem(VOTES.balanceOf(user2));
-    //
-    //     // current TRSRY total = 1M - 190k = 810k DAI
-    //     // user2 holds 200k/800k tokens = 25% of TRSRY = 202.5k
-    //     // redeeming 25% * 95% * 810k = 192,375 DAI
-    //     assertEq(DAI.balanceOf(user2), 192_375 * 1e18);
-    //     assertEq(DAI.balanceOf(address(TRSRY)), 617_625 * 1e18);
-    //
-    //     vm.stopPrank();
-    //
-    //     // redeem user3
-    //     vm.startPrank(user3);
-    //     VOTES.approve(address(TRSRY), VOTES.balanceOf(user3));
-    //     redemption.redeem(VOTES.balanceOf(user3));
-    //
-    //     // current TRSRY total = 810k - 192,375 = 617,625 DAI
-    //     // user3 holds 600k/600k tokens = 100% of TRSRY = 617,625 DAI
-    //     // redeeming 100% * 95% * 617,625 DAI = 586,743.75 DAI
-    //     assertEq(DAI.balanceOf(user3), 586_74375 * 1e16);
-    //     assertEq(DAI.balanceOf(address(TRSRY)), 30_88125 * 1e16);
-    //     vm.stopPrank();
-    // }
-    //
+    function testCorrectness_Mint() public {
+        // register pod as user
+        vm.startPrank(registryGod);
+        RSTRY.registerUser(address(pod), "POD");
+        vm.stopPrank();
+
+        // redeem user1
+        vm.startPrank(user1);
+        pod.mintOne();
+        vm.stopPrank();
+    }
+
     // function testCorrectness_Redeem_MultiAsset() public {
     //     MockERC20 USDC = new MockERC20("USDC", "USDC", 6);
     //

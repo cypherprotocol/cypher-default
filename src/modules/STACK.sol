@@ -35,7 +35,14 @@ contract DefaultHardwareStack is Module, IDefaultStack {
         permissioned
         returns (uint256 functionIndex)
     {
-        Stack storage stack = getStackForUserId[userId];
+        // Stack storage stack = getStackForUserId[userId];
+        // functionIndex = stack.numExecuted;
+        // bytes32 data = stack.getFunctionForIndex[functionIndex];
+        // (bool success, bytes memory returnData) = address(this).call(data);
+        // if (!success) {
+        //     revert(string(returnData));
+        // }
+        // stack.numExecuted++;
     }
 
     function addCallToStack(
@@ -49,7 +56,6 @@ contract DefaultHardwareStack is Module, IDefaultStack {
 
         Stack storage stack = getStackForUserId[userId];
         stack.getFunctionForIndex[stack.numExecuted] = callHash;
-        stack.numExecuted++;
     }
 
     /// INTERNAL FUNCTIONS
