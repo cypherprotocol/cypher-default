@@ -4,11 +4,11 @@
 pragma solidity ^0.8.15;
 
 import { ERC721 } from "solmate/tokens/ERC721.sol";
-import { Cypher } from "./policies/Cypher.sol";
-import { Kernel } from "./Kernel.sol";
+import { CypherDefense } from "../../../src/CypherDefense.sol";
+import { Kernel } from "../../../src/Kernel.sol";
 
-contract Pod is ERC721, Cypher {
-    constructor(Kernel kernel_) Cypher(kernel_) ERC721("Pod", "POD") {}
+contract Pod is ERC721, CypherDefense {
+    constructor(address cypher) CypherDefense(cypher) ERC721("Pod", "POD") {}
 
     uint256 public currentId;
 

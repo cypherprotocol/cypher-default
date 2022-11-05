@@ -13,7 +13,6 @@ import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { DefaultRegistry } from "src/modules/RSTRY.sol";
 import { DefaultHardwareStack } from "src/modules/STACK.sol";
 import { ICypher, Cypher } from "src/policies/Cypher.sol";
-import { Pod } from "src/Pod.sol";
 
 import "../lib/ModuleTestFixtureGenerator.sol";
 
@@ -30,7 +29,6 @@ contract CypherTest is Test {
 
     // policies
     Cypher internal cypher;
-    Pod internal pod;
 
     MockERC20 internal DAI;
 
@@ -63,8 +61,8 @@ contract CypherTest is Test {
         STACK = new DefaultHardwareStack(kernel);
 
         // deploy redemption
-        // cypher = new Cypher(kernel);
-        pod = new Pod(kernel);
+        cypher = new Cypher(kernel);
+        // pod = new Pod(kernel);
 
         // generate fixtures
         registryGod = RSTRY.generateGodmodeFixture(type(DefaultRegistry).name);
@@ -73,7 +71,7 @@ contract CypherTest is Test {
         // set up kernel
         kernel.executeAction(Actions.InstallModule, address(RSTRY));
         kernel.executeAction(Actions.InstallModule, address(STACK));
-        kernel.executeAction(Actions.ActivatePolicy, address(pod));
+        kernel.executeAction(Actions.ActivatePolicy, address(cypher));
         kernel.executeAction(Actions.ActivatePolicy, address(registryGod));
         kernel.executeAction(Actions.ActivatePolicy, address(stackGod));
 
@@ -92,12 +90,12 @@ contract CypherTest is Test {
     function testCorrectness_Mint() public {
         // register pod as user
         vm.startPrank(registryGod);
-        RSTRY.registerUser(address(pod), "POD");
+        // RSTRY.registerUser(address(pod), "POD");
         vm.stopPrank();
 
         // redeem user1
         vm.startPrank(user1);
-        pod.mintOne();
+        // pod.mintOne();
         vm.stopPrank();
     }
 

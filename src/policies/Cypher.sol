@@ -13,6 +13,8 @@ interface ICypher {
         bytes data,
         uint256 value
     );
+
+    error UnregisteredUser();
 }
 
 contract Cypher is Policy, ICypher {
@@ -50,39 +52,15 @@ contract Cypher is Policy, ICypher {
         requests[0] = Permissions(toKeycode("STACK"), STACK.addCallToStack.selector);
     }
 
-    modifier withCypher() {
-        STACK.addCallToStack(
-            RSTRY.getUserIdForAddress(address(this)),
-            msg.sender,
-            msg.sig,
-            msg.data,
-            0
-        );
-        emit CallAddedToStack(
-            RSTRY.getUserIdForAddress(address(this)),
-            msg.sender,
-            msg.sig,
-            msg.data,
-            0
-        );
-        _;
-    }
-
-    modifier withCypherPayable() {
-        STACK.addCallToStack(
-            RSTRY.getUserIdForAddress(address(this)),
-            msg.sender,
-            msg.sig,
-            msg.data,
-            msg.value
-        );
-        emit CallAddedToStack(
-            RSTRY.getUserIdForAddress(address(this)),
-            msg.sender,
-            msg.sig,
-            msg.data,
-            msg.value
-        );
-        _;
+    function stashCall(
+        address caller,
+        bytes4 funcSelector,
+        bytes calldata data,
+        uint256 value
+    ) external {
+        bytes32 userId = RSTRY.getUserIdForAddress(address(msg.sender));
+        if (userId == "") revert UnregisteredUser();
+        STACK.addCallToStack(userId, caller, funcSelector, data, value);
+        emit CallAddedToStack(userId, caller, funcSelector, data, value);
     }
 }
