@@ -1,15 +1,21 @@
-import { DefaultEscrow } from "../modules/ESCRW.sol";
+import { DefaultRegistry } from "../modules/RSTRY.sol";
+import { DefaultHardwareStack } from "../modules/STACK.sol";
 import { Kernel, Policy, Permissions, Keycode } from "../Kernel.sol";
 import { toKeycode } from "../utils/KernelUtils.sol";
 
 pragma solidity ^0.8.15;
 
-contract Verifier is Policy {
+interface IVerifier {
+    error NotAssignedVerifier();
+}
+
+contract Verifier is Policy, IVerifier {
     /////////////////////////////////////////////////////////////////////////////////
     //                         Kernel Policy Configuration                         //
     /////////////////////////////////////////////////////////////////////////////////
 
-    DefaultEscrow public ESCRW;
+    DefaultRegistry public RSTRY;
+    DefaultHardwareStack public STACK;
 
     constructor(Kernel kernel_) Policy(kernel_) {}
 
@@ -19,10 +25,12 @@ contract Verifier is Policy {
         onlyKernel
         returns (Keycode[] memory dependencies)
     {
-        dependencies = new Keycode[](1);
+        dependencies = new Keycode[](2);
 
-        dependencies[0] = toKeycode("ESCRW");
-        ESCRW = DefaultEscrow(getModuleAddress(toKeycode("ESCRW")));
+        dependencies[0] = toKeycode("RSTRY");
+        dependencies[1] = toKeycode("STACK");
+        RSTRY = DefaultRegistry(getModuleAddress(toKeycode("RSTRY")));
+        STACK = DefaultHardwareStack(getModuleAddress(toKeycode("STACK")));
     }
 
     function requestPermissions()
@@ -33,15 +41,15 @@ contract Verifier is Policy {
         returns (Permissions[] memory requests)
     {
         requests = new Permissions[](1);
-        requests[0] = Permissions(toKeycode("ESCRW"), ESCRW.executeCallFromStack.selector);
+        requests[0] = Permissions(toKeycode("STACK"), STACK.executeCallFromStack.selector);
     }
 
     modifier onlyVerifier(bytes32 userId) {
-        require(msg.sender == ESCRW.getVerifierForUserId(userId), "Delegator: not delegate");
+        if (msg.sender == RSTRY.getVerifierForUserId(userId)) revert NotAssignedVerifier();
         _;
     }
 
     function executeCallFromStack(bytes32 userId) external onlyVerifier(userId) {
-        ESCRW.executeCallFromStack(userId);
+        STACK.executeCallFromStack(userId);
     }
 }
